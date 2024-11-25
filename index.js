@@ -49,10 +49,16 @@ const io = new Server(server, {
 // Handle WebSocket connection
 io.on("connection", (socket) => {
   console.log("A user connected");
-  socket.on("disconnect", () => {
-    console.log("A user disconnected");
+
+  socket.on("error", (error) => {
+    console.error("Socket error:", error);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log(`Disconnected: ${reason}`);
   });
 });
+
 
 // Middleware for JSON handling
 app.use(express.json({ limit: "100mb" }));
