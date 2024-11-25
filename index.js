@@ -22,28 +22,13 @@ const allowedOrigins = [
 ];
 
 // CORS Middleware
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true // Enable cookies and auth headers
-}));
+app.use(cors())
 
 // WebSocket Server Setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Consistent with HTTP CORS
-    methods: ["GET", "POST"],
-    credentials: true
-  },
-  transports: ["websocket", "polling"] // Ensure WebSocket is enabled
+    origin: "*",
+  }
 });
 
 // Handle WebSocket connection
