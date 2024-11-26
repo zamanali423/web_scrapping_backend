@@ -1,9 +1,50 @@
 const cheerio = require("cheerio");
 const puppeteerExtra = require("puppeteer-extra");
 const stealthPlugin = require("puppeteer-extra-plugin-stealth");
-const chromium = require("@sparticuz/chromium");
 const Lead = require("../models/Lead");
 const { scrapeData } = require("./websiteScrapping");
+
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
+// Helper function to get browser path
+function getLocalBrowserPath() {
+  const paths = {
+    win32: [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+      "C:\\Program Files\\Opera\\launcher.exe",
+    ],
+    darwin: [
+      // macOS paths
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+      "/Applications/Firefox.app/Contents/MacOS/firefox",
+      "/Applications/Opera.app/Contents/MacOS/Opera",
+    ],
+    linux: [
+      // Linux paths
+      "/usr/bin/google-chrome",
+      "/usr/bin/microsoft-edge",
+      "/usr/bin/firefox",
+      "/usr/bin/opera",
+    ],
+  };
+
+  const platform = process.platform;
+  const browserPaths = paths[platform] || [];
+
+  // Return the first existing browser path
+  for (const browserPath of browserPaths) {
+    if (fs.existsSync(browserPath)) {
+      return browserPath;
+    }
+  }
+
+  throw new Error("No supported browser found on this system.");
+}
 
 async function searchGoogleMaps(project, io) {
   try {
@@ -11,19 +52,18 @@ async function searchGoogleMaps(project, io) {
 
     puppeteerExtra.use(stealthPlugin());
 
+    const browserPath = getLocalBrowserPath(); // Get dynamic browser path
+
     const browser = await puppeteerExtra.launch({
+      headless: false,
+      executablePath: browserPath,
       args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
-    '--disable-accelerated-2d-canvas',
-    '--disable-gpu',
-    '--single-process'
-  ],
-  headless: false,
-  defaultViewport: chromium.defaultViewport,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+      ],
     });
-console.log('Chromium Path:', await chromium.executablePath());
+
     const page = await browser.newPage();
 
     const { city, businessCategory } = project;
@@ -126,14 +166,15 @@ console.log('Chromium Path:', await chromium.executablePath());
         stars: ratingText?.split("stars")?.[0]?.trim()
           ? Number(ratingText?.split("stars")?.[0]?.trim())
           : null,
-        numberOfReviews: ratingText
-          ?.split("stars")?.[1]
-          ?.replace("Reviews", "")
-          ?.trim()
-          ? Number(
-              ratingText?.split("stars")?.[1]?.replace("Reviews", "")?.trim()
-            )
-          : null,
+        numberOfReviews: (() => {
+          const reviewsText = ratingText
+            ?.split("stars")?.[1]
+            ?.replace("Reviews", "")
+            ?.trim();
+          return reviewsText && !isNaN(Number(reviewsText))
+            ? Number(reviewsText)
+            : 0; // Prevent NaN errors
+        })(),
       });
     });
 
