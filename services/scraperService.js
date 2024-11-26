@@ -20,8 +20,7 @@ async function searchGoogleMaps(project, io) {
     '--disable-gpu',
     '--single-process'
   ],
-  executablePath: await chromium.executablePath(), 
-  headless: true,
+  headless: false,
   defaultViewport: chromium.defaultViewport,
     });
 console.log('Chromium Path:', await chromium.executablePath());
