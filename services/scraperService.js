@@ -12,9 +12,19 @@ async function searchGoogleMaps(project, io) {
     puppeteerExtra.use(stealthPlugin());
 
     const browser = await puppeteerExtra.launch({
-      headless: true,
+      args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-accelerated-2d-canvas',
+    '--disable-gpu',
+    '--single-process'
+  ],
+  executablePath: await chromium.executablePath(), 
+  headless: true,
+  defaultViewport: chromium.defaultViewport,
     });
-
+console.log('Chromium Path:', await chromium.executablePath());
     const page = await browser.newPage();
 
     const { city, businessCategory } = project;
