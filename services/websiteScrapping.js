@@ -12,7 +12,18 @@ async function isWebsiteAvailable(url) {
 }
 
 async function scrapeData(url) {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteerExtra.launch({
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--disable-gpu",
+      "--single-process",
+    ],
+    headless: true,
+    defaultViewport: chromium.defaultViewport,
+  });
   let about = "";
   let logoUrl = "";
   let email = "";
