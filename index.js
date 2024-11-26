@@ -15,19 +15,14 @@ const cors = require("cors");
 const app = express();
 const server = http.createServer(app);
 
-// Define allowed origins
-const allowedOrigins = [
-  "http://localhost:3000", // Local development
-  "https://webscrappingunipuler.vercel.app" // Deployed frontend
-];
-
 // CORS Middleware
 app.use(cors())
 
 // WebSocket Server Setup
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: ["https://webscrappingunipuler.vercel.app", "*"], // Use an array for multiple origins
+    credentials: true // Optional: Allow credentials (cookies, authorization headers, etc.)
   }
 });
 
