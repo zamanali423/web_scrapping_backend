@@ -35,7 +35,7 @@ async function initQueue(io, mongoose) {
         });
         job.progress(10);
         // Execute the scraping process
-        const data = await searchGoogleMaps(project);
+        const data = await searchGoogleMaps(project,io);
         console.log("Google Maps data scraped:", data?.length);
         job.progress(100);
         // Check if the result is empty
