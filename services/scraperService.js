@@ -5,7 +5,7 @@ const chromium = require("@sparticuz/chromium");
 const Lead = require("../models/Lead");
 const { scrapeData } = require("./websiteScrapping");
 
-async function searchGoogleMaps(project) {
+async function searchGoogleMaps(project, io) {
   try {
     const start = Date.now();
 
@@ -13,14 +13,17 @@ async function searchGoogleMaps(project) {
 
     const browser = await puppeteerExtra.launch({
       headless: true,
-      executablePath: "",
     });
 
     const page = await browser.newPage();
 
     const { city, businessCategory } = project;
     const query = `${businessCategory} ${city}`;
-
+    console.log(
+      `Navigating: https://www.google.com/maps/search/${query
+        .split(" ")
+        .join("+")}`
+    );
     try {
       await page.goto(
         `https://www.google.com/maps/search/${query.split(" ").join("+")}`
@@ -35,7 +38,7 @@ async function searchGoogleMaps(project) {
         await new Promise((resolve) => {
           var totalHeight = 0;
           var distance = 1000;
-          var scrollDelay = 5000;
+          var scrollDelay = 8000;
           var timer = setInterval(async () => {
             var scrollHeightBefore = wrapper.scrollHeight;
             wrapper.scrollBy(0, distance);
@@ -163,12 +166,10 @@ async function searchGoogleMaps(project) {
               return data;
             })
           );
-
+          io.emit("batchUpdate", results);
           batchResults.push(...results);
           await delay(5000); // 5-second delay between batches
         }
-
-        console.log("Processed batch results:", batchResults.slice(0, 10));
 
         // Prepare data for database insertion
         const leadsToSave = batchResults.map((business) => ({
@@ -187,11 +188,12 @@ async function searchGoogleMaps(project) {
 
         // Save the data into MongoDB
         await Lead.insertMany(leadsToSave);
-        console.log("Data added successfully");
+        io.emit("scrapingComplete", { message: "Data added successfully" });
 
         return batchResults;
       } catch (error) {
         console.error("Error in processBusinesses:", error.message);
+        io.emit("scrapingError", { message: error.message });
         throw error; // Ensure error propagation for debugging
       }
     }
