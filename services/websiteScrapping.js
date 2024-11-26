@@ -1,5 +1,49 @@
 const puppeteer = require("puppeteer");
 const axios = require("axios");
+const puppeteerExtra = require("puppeteer-extra");
+const stealthPlugin = require("puppeteer-extra-plugin-stealth");
+
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
+// Helper function to get browser path
+function getLocalBrowserPath() {
+  const paths = {
+    win32: [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+      "C:\\Program Files\\Opera\\launcher.exe",
+    ],
+    darwin: [
+      // macOS paths
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+      "/Applications/Firefox.app/Contents/MacOS/firefox",
+      "/Applications/Opera.app/Contents/MacOS/Opera",
+    ],
+    linux: [
+      // Linux paths
+      "/usr/bin/google-chrome",
+      "/usr/bin/microsoft-edge",
+      "/usr/bin/firefox",
+      "/usr/bin/opera",
+    ],
+  };
+
+  const platform = process.platform;
+  const browserPaths = paths[platform] || [];
+
+  // Return the first existing browser path
+  for (const browserPath of browserPaths) {
+    if (fs.existsSync(browserPath)) {
+      return browserPath;
+    }
+  }
+
+  throw new Error("No supported browser found on this system.");
+}
 
 async function isWebsiteAvailable(url) {
   try {
@@ -12,17 +56,17 @@ async function isWebsiteAvailable(url) {
 }
 
 async function scrapeData(url) {
+  puppeteerExtra.use(stealthPlugin());
+  const browserPath = getLocalBrowserPath(); // Get dynamic browser path
+
   const browser = await puppeteerExtra.launch({
+    headless: true,
+    executablePath: browserPath,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--disable-gpu",
-      "--single-process",
     ],
-    headless: true,
-    defaultViewport: chromium.defaultViewport,
   });
   let about = "";
   let logoUrl = "";
