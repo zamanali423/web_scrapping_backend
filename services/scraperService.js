@@ -55,7 +55,7 @@ async function searchGoogleMaps(project, io) {
     const browserPath = getLocalBrowserPath(); // Get dynamic browser path
 
     const browser = await puppeteerExtra.launch({
-      headless: false,
+      headless: true,
       executablePath: browserPath,
       args: [
         "--no-sandbox",
@@ -74,9 +74,10 @@ async function searchGoogleMaps(project, io) {
         .join("+")}`
     );
     try {
-      await page.goto(
-        `https://www.google.com/maps/search/${query.split(" ").join("+")}`
-      );
+           await page.goto(
+          `https://www.google.com/maps/search/${query.split(" ").join("+")}`,
+           { timeout: 30000 } // 30 seconds timeout for page loading
+              );
     } catch (error) {
       console.log("Error navigating to the page");
     }
